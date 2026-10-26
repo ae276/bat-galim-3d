@@ -1,0 +1,583 @@
+<title>מודל בת גלים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Miriam+Libre:wght@700&display=swap">
+<style>
+/* Layout: full-bleed 3D scene; RTL control panel docked right (bottom sheet on phones); view toolbar floating top-left. */
+:root{
+  --land:#e4e6e1; --sea:#a8c4d6; --far:#d5dbdc; --sky:#dfe6ea;
+  --road:#f8f8f6; --rail:#4a4f52; --park:#c9dcbc; --beach:#ead9b0;
+  --bld:#fbfbf8; --bld-edge:#8e9692; --demo:#e9a598;
+  --panel:#fbfbfa; --panel-2:#f1f2ef; --ink:#1d2326; --ink-2:#5b6468; --line:#d8dbd7;
+  --accent:#1f5f7a; --accent-ink:#ffffff;
+  --ok:#2f7d4f; --warn:#a86b12; --info:#3f6b8a; --muted:#7a8386;
+  --shadow:0 8px 28px rgba(20,30,35,.16);
+  --lu-res:#f2cf8f; --lu-open:#b9dba5; --lu-public:#d3b896; --lu-com:#d7b0e3; --lu-hotel:#ef9f9f; --lu-other:#d6d8d4;
+  --f-display:"Miriam Libre","IBM Plex Sans Hebrew",Arial,sans-serif;
+  --f-body:"IBM Plex Sans Hebrew",Arial,"Segoe UI",sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --land:#1d2327; --sea:#10293a; --far:#161c20; --sky:#12181c;
+  --road:#2c3439; --rail:#8b9499; --park:#1f3326; --beach:#3b3526;
+  --bld:#3b4448; --bld-edge:#69757b; --demo:#7c3b33;
+  --panel:#151b1e; --panel-2:#1d2428; --ink:#e7ecee; --ink-2:#a2adb2; --line:#2c3539;
+  --accent:#6fb3d2; --accent-ink:#0d1a20;
+  --ok:#6cc08f; --warn:#e0a74a; --info:#8db7d6; --muted:#8c979b;
+  --shadow:0 8px 28px rgba(0,0,0,.45); color-scheme:dark;
+  --lu-res:#6b5730; --lu-open:#2f5236; --lu-public:#5a4a3a; --lu-com:#5a3f66; --lu-hotel:#6e3a3a; --lu-other:#30383b;
+}}
+:root[data-theme="dark"]{
+  --land:#1d2327; --sea:#10293a; --far:#161c20; --sky:#12181c;
+  --road:#2c3439; --rail:#8b9499; --park:#1f3326; --beach:#3b3526;
+  --bld:#3b4448; --bld-edge:#69757b; --demo:#7c3b33;
+  --panel:#151b1e; --panel-2:#1d2428; --ink:#e7ecee; --ink-2:#a2adb2; --line:#2c3539;
+  --accent:#6fb3d2; --accent-ink:#0d1a20;
+  --ok:#6cc08f; --warn:#e0a74a; --info:#8db7d6; --muted:#8c979b;
+  --shadow:0 8px 28px rgba(0,0,0,.45); color-scheme:dark;
+  --lu-res:#6b5730; --lu-open:#2f5236; --lu-public:#5a4a3a; --lu-com:#5a3f66; --lu-hotel:#6e3a3a; --lu-other:#30383b;
+}
+html,body{height:100%}
+body{background:var(--sky);color:var(--ink);font-family:var(--f-body);overflow:hidden}
+#app{position:relative;height:100%;overflow:hidden}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#c:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.tools,#panel,.navpad,#tip,#bview{z-index:4}
+#bview{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(36px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 32px);padding:8px 10px 8px 14px;background:#ffc400;color:#1b1600;border:2px solid #1b1600;border-radius:10px;box-shadow:var(--shadow);direction:rtl;font:600 13px var(--f-body)}
+#bview .bh{font-weight:500;font-size:12px}
+#bview button{appearance:none;border:1px solid #1b1600;background:#fff7d6;color:#1b1600;font:600 12px var(--f-body);padding:4px 10px;border-radius:6px;cursor:pointer}
+[data-balc][aria-pressed="true"]{background:#ffc400;color:#1b1600}
+.ptag{position:absolute;transform:translate(-50%,-100%);display:flex;align-items:center;gap:6px;padding:3px 8px 3px 7px;border-radius:4px;background:var(--panel);color:var(--ink);font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.18);border-inline-start:4px solid var(--c);pointer-events:auto;cursor:pointer}
+.ptag b{font-family:var(--f-data);font-weight:500;font-size:11px;color:var(--ink-2)}
+.ptag::after{content:"";position:absolute;bottom:-5px;left:50%;width:1px;height:5px;background:var(--ink-2)}
+.btag{position:absolute;transform:translate(-50%,-100%);padding:1px 6px;border-radius:3px;background:var(--ink);color:var(--panel);font:600 11.5px var(--f-data);letter-spacing:.02em;white-space:nowrap;pointer-events:none}
+.btag small{font:500 10px var(--f-body);opacity:.8;margin-inline-start:4px}
+.utag{position:absolute;transform:translate(-50%,-100%);background:#ffc400;color:#1b1600;border:2px solid #1b1600;border-radius:6px;padding:3px 9px;font:700 12.5px var(--f-body);white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.35);pointer-events:auto;cursor:pointer}
+.utag::after{content:"";position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);border:6px solid transparent;border-top-color:#1b1600}
+.mine{display:grid;gap:6px;margin-top:4px}
+.ucard{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;border:1px solid var(--line);border-inline-start:5px solid #ffc400;border-radius:8px;padding:8px 10px;background:var(--panel-2)}
+.ucard .ut{font-weight:600;font-size:13.5px;grid-column:1/3}
+.ucard .us{font-size:12px;color:var(--ink-2);grid-column:1/3}
+.ucard .ub{grid-column:1/3;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.ub button{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:500 12px var(--f-body);padding:4px 9px;border-radius:6px;cursor:pointer}
+.ub button:hover{border-color:var(--accent)}
+.navpad{position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(36px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(3,36px);gap:4px;padding:6px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);direction:ltr}
+.nb{appearance:none;width:36px;height:34px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);font:600 16px/1 var(--f-body);cursor:pointer;display:grid;place-items:center}
+.nb:hover{background:var(--panel-2)} .nb[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.nb:focus-visible,.ub button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.navhint{grid-column:1/4;font-size:10.5px;color:var(--ink-2);text-align:center;direction:rtl;line-height:1.35;max-width:120px}
+.slabel{position:absolute;transform:translate(-50%,-50%);font-size:10.5px;color:var(--ink-2);white-space:nowrap;text-shadow:0 0 3px var(--land),0 0 3px var(--land);font-weight:500}
+/* toolbar */
+.tools{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));display:flex;flex-wrap:wrap;gap:8px;max-width:calc(100% - 420px);direction:rtl}
+.group{display:flex;align-items:center;gap:2px;padding:3px;background:var(--panel);border-radius:8px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.group label.cap{font-size:11px;color:var(--ink-2);padding:0 8px 0 6px;letter-spacing:.02em}
+.seg{appearance:none;border:0;background:transparent;color:var(--ink);font:500 12.5px var(--f-body);padding:6px 10px;border-radius:6px;cursor:pointer}
+.seg:hover{background:var(--panel-2)}
+.seg[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.seg:focus-visible,.pcard button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=range]{accent-color:var(--accent);width:96px}
+.chk{display:flex;align-items:center;gap:6px;font-size:12.5px;padding:4px 8px;cursor:pointer}
+.chk input{accent-color:var(--accent)}
+.compass{width:34px;height:34px;display:grid;place-items:center;padding:0}
+.compass svg{width:26px;height:26px;transition:transform .05s linear}
+/* panel */
+#panel{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));right:max(16px,env(safe-area-inset-right,0px));width:368px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;direction:rtl}
+.phead{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:grid;gap:6px}
+.eyebrow{font-size:11px;letter-spacing:.06em;color:var(--ink-2);font-weight:500}
+h1{margin:0;font:700 22px/1.2 var(--f-display);text-wrap:balance}
+.sum{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2)}
+.sum strong{font-family:var(--f-data);font-weight:500;color:var(--ink);font-size:14px;font-variant-numeric:tabular-nums}
+.sheet-toggle{display:none}
+.plist{overflow:auto;padding:10px 12px 12px;display:grid;gap:8px;min-height:0}
+.pcard{border:1px solid var(--line);border-radius:8px;background:var(--panel);display:grid;grid-template-columns:auto 1fr;column-gap:10px;padding:10px 10px 10px 12px;position:relative}
+.pcard.active{border-color:var(--c);box-shadow:0 0 0 1px var(--c) inset}
+.pcard .vis{grid-row:1/3;align-self:start;margin-top:2px;width:18px;height:18px;accent-color:var(--c);cursor:pointer}
+.pcard .main{min-width:0;display:grid;gap:4px}
+.pcard .ttl{appearance:none;background:none;border:0;padding:0;text-align:right;font:600 14.5px/1.3 var(--f-body);color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:7px}
+.sw{width:10px;height:10px;border-radius:2px;background:var(--c);flex:none}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12px;color:var(--ink-2)}
+.code{font-family:var(--f-data);font-size:11px;direction:ltr;unicode-bidi:isolate}
+.st-deposited{}
+.chip{font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid currentColor;line-height:1.6}
+.st-permit{color:var(--ok)} .st-approved{color:var(--ok)} .st-deposited{color:var(--warn)} .st-submitted{color:var(--info)} .st-prep{color:var(--muted)}
+.chip.st-permit{background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.kv{font-size:12.5px;line-height:1.5}
+.kv .u{font-weight:600}
+.more{display:none;gap:6px;font-size:12px;line-height:1.55;color:var(--ink-2);border-top:1px dashed var(--line);padding-top:7px;margin-top:4px}
+.pcard.open .more{display:grid}
+.more .acc{color:var(--ink)}
+.more .acc::before{content:"רמת דיוק: ";font-weight:600}
+.more a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.legend{border-top:1px solid var(--line);padding:10px 16px 12px;display:grid;gap:6px;font-size:11.5px;color:var(--ink-2);line-height:1.5}
+.legend .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.lg{display:inline-flex;align-items:center;gap:5px}
+.lg i{width:12px;height:10px;border-radius:2px;display:inline-block}
+.lg .ex{background:var(--bld);border:1px solid var(--bld-edge)}
+.lg .fu{background:color-mix(in srgb,var(--accent) 40%,transparent);border:1px solid var(--accent)}
+.lg .de{background:var(--demo);border:1px solid var(--bld-edge)}
+/* tooltip */
+#tip{position:absolute;z-index:5;min-width:190px;max-width:260px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:10px 12px;font-size:12.5px;line-height:1.5;direction:rtl;pointer-events:none}
+#tip .t{font-weight:600;font-size:13.5px;display:flex;gap:6px;align-items:center}
+#tip .n{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+#tip .s{color:var(--ink-2)}
+.attrib{position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));font-size:10.5px;color:var(--ink-2);background:color-mix(in srgb,var(--panel) 80%,transparent);padding:2px 6px;border-radius:4px;direction:rtl}
+@media (max-width:760px){
+  .tools{max-width:calc(100% - 32px);right:max(16px,env(safe-area-inset-right,0px));justify-content:flex-start}
+  #panel{top:auto;left:0;right:0;bottom:0;width:auto;max-height:48%;border-radius:12px 12px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}
+  #panel.collapsed .plist,#panel.collapsed .legend{display:none}
+  .phead{padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));grid-template-columns:1fr auto;align-items:center}
+  .phead .eyebrow,.phead .sum{grid-column:1/2}
+  h1{font-size:18px}
+  .sheet-toggle{display:inline-flex;grid-row:1/4;grid-column:2;align-self:center}
+  .attrib{bottom:auto;top:calc(116px + env(safe-area-inset-top,0px))}
+  .navpad{bottom:calc(48% + 12px)} .navhint{display:none}
+  input[type=range]{width:70px}
+}
+@media (prefers-reduced-motion:reduce){.compass svg{transition:none}}
+
+.itag{position:absolute;transform:translate(-50%,-100%);display:flex;align-items:center;gap:5px;padding:2px 8px 2px 7px;border-radius:999px;background:var(--panel);color:var(--ink);font:600 11px var(--f-body);white-space:nowrap;box-shadow:0 1px 6px rgba(0,0,0,.22);pointer-events:auto;cursor:pointer;border:1.5px solid var(--ic);max-width:240px;overflow:hidden;text-overflow:ellipsis}
+.itag i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--ic)}
+.itag.fut{border-style:dashed}
+.itag.fut::before{content:"מתוכנן";flex:none;font:700 9.5px var(--f-body);color:#fff;background:var(--ic);border-radius:999px;padding:0 6px;line-height:15px}
+.ibox{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel-2);display:grid;gap:7px}
+.ibox .ih{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:600;font-size:13px}
+.ibox .ih label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.ibox .ih2 label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px}
+.ibox .ih small{font-weight:500;color:var(--ink-2);font-size:11.5px}
+.ichips{display:flex;flex-wrap:wrap;gap:5px}
+.ichip{appearance:none;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:500 11.5px var(--f-body);padding:3px 8px;border-radius:999px;cursor:pointer}
+.ichip i{width:9px;height:9px;border-radius:50%;background:var(--ic)}
+.ichip[aria-pressed="false"]{opacity:.45}
+.ichip[aria-pressed="false"] i{background:transparent;border:1.5px solid var(--ic)}
+.ibox details summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.ibox ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:2px}
+.ibox li button{appearance:none;width:100%;text-align:start;border:0;background:transparent;color:var(--ink);font:500 12px var(--f-body);padding:5px 4px;border-radius:5px;cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:1px 7px;align-items:center}
+.ibox li button:hover{background:var(--panel)}
+.ibox li i{width:9px;height:9px;transform:rotate(45deg);background:var(--ic);grid-row:1/3}
+.ibox li small{color:var(--ink-2);font-size:11px}
+.ibox .inote{font-size:11px;color:var(--ink-2);line-height:1.45}
+#bview[hidden]{display:none}
+.laysw[hidden]{display:none}
+</style>
+
+<div id="app">
+  <canvas id="c" aria-label="מודל תלת-ממדי של שכונת בת גלים"></canvas>
+  <div id="labels"></div>
+
+  <div class="tools" role="toolbar" aria-label="תצוגה">
+    <div class="group" role="group" aria-label="מצב">
+      <button class="seg" id="m-ex" data-mode="existing" aria-pressed="false">קיים</button>
+      <button class="seg" id="m-both" data-mode="both" aria-pressed="true">קיים + עתידי</button>
+      <button class="seg" id="m-fu" data-mode="future" aria-pressed="false">מצב עתידי</button>
+    </div>
+    <div class="group" role="group" aria-label="נקודת מבט">
+      <button class="seg" id="v-sea" data-view="sea">מהים</button>
+      <button class="seg" id="v-top" data-view="top">מבט על</button>
+      <button class="seg" id="v-carmel" data-view="carmel">מהכרמל</button>
+    </div>
+    <div class="group" role="group" aria-label="מבט מהמרפסת">
+      <label class="cap">מהמרפסת</label>
+      <button class="seg" id="v-b-t3d3" data-balc="t3d3">T3 · D3</button>
+      <button class="seg" id="v-b-b3c" data-balc="b3c">B3 · C</button>
+      <button class="seg compass" id="v-north" title="צפון למעלה" aria-label="צפון למעלה"><svg viewBox="0 0 26 26" id="needle"><path d="M13 2 L17 13 L13 11 L9 13 Z" fill="var(--accent)"/><path d="M13 24 L9 13 L13 15 L17 13 Z" fill="var(--muted)"/><text x="13" y="9.5" font-size="0" fill="none">N</text></svg></button>
+    </div>
+    <div class="group" role="group" aria-label="שכבות">
+      <label class="cap" for="op">שקיפות</label><input id="op" type="range" min="15" max="90" value="45">
+      <label class="chk"><input type="checkbox" id="t-demo" checked>להריסה</label>
+      <label class="chk"><input type="checkbox" id="t-lu" checked>ייעודי קרקע</label>
+      <label class="chk"><input type="checkbox" id="t-inst" checked>מוסדות ציבור</label>
+      <label class="chk"><input type="checkbox" id="t-iname" checked>שמות מוסדות</label>
+      <label class="chk"><input type="checkbox" id="t-lab" checked>תוויות</label>
+      <label class="chk"><input type="checkbox" id="t-sh" checked>צל</label>
+    </div>
+  </div>
+
+  <aside id="panel" aria-label="תוכניות">
+    <div class="phead">
+      <div class="eyebrow">חיפה · רובע 4 · שכונת בת גלים</div>
+      <h1>תוכניות הפיתוח של בת גלים</h1>
+      <div class="sum"><span><strong id="s-n">18</strong> תוכניות</span><span><strong id="s-u">≈6,550</strong> יח"ד צפויות</span><span><strong id="s-max">35</strong> קומות מקס׳</span></div>
+      <div class="mine" id="mine" aria-label="הדירות שלנו"></div>
+      <button class="seg sheet-toggle" id="sheet" aria-expanded="true">הסתר</button>
+    </div>
+    <div class="plist" id="plist"></div>
+    <div class="legend">
+      <div class="row"><span class="lg"><i class="ex"></i>מבנה קיים</span><span class="lg"><i class="fu"></i>מבנה מתוכנן (חצי שקוף)</span><span class="lg"><i class="de"></i>מיועד להריסה</span></div>
+      <div class="row"><span class="lg"><i style="background:var(--lu-res)"></i>מגורים</span><span class="lg"><i style="background:var(--lu-com)"></i>מסחר ותעסוקה</span><span class="lg"><i style="background:var(--lu-public)"></i>מבני ציבור</span><span class="lg"><i style="background:var(--lu-open)"></i>שצ"פ</span><span class="lg"><i style="background:var(--lu-hotel)"></i>מלונאות</span><span class="lg"><i style="border:1px dashed var(--ink-2)"></i>תוכניות בקריית אליעזר</span></div>
+      <div>גבולות התוכניות, תאי השטח וקווי הבניין נלקחו משכבות XPLAN של מנהל התכנון. מספר הקומות והגובה לכל תא לקוחים מטבלה 5 בהוראות התוכנית, ומיקום המגדל בתוך התא סכמטי. מבנים המסומנים "משוער" נשענים על פרסומים או על הנחה. אין טופוגרפיה: כל המבנים יושבים על מפלס 0. גובה מבנה קיים ללא נתון מוערך לפי שטחו.</div>
+    </div>
+  </aside>
+
+  <div class="navpad" role="group" aria-label="ניווט במודל">
+    <button class="nb" id="n-rl" title="סובב שמאלה" aria-label="סובב שמאלה">↺</button>
+    <button class="nb" id="n-up" title="הטה למבט על" aria-label="הטה למבט על">▲</button>
+    <button class="nb" id="n-rr" title="סובב ימינה" aria-label="סובב ימינה">↻</button>
+    <button class="nb" id="n-in" title="התקרב" aria-label="התקרב">+</button>
+    <button class="nb" id="n-dn" title="הטה לגובה העין" aria-label="הטה לגובה העין">▼</button>
+    <button class="nb" id="n-out" title="התרחק" aria-label="התרחק">−</button>
+    <button class="nb" id="n-auto" style="grid-column:1/4;width:auto;font-size:12px" aria-pressed="false">סיבוב אוטומטי 360°</button>
+    <div class="navhint">גרירה: סיבוב · גלגלת או צביטה: זום · קליק ימני או שתי אצבעות: הזזה</div>
+    <button class="nb laysw" id="lay-sw" style="grid-column:1/4;width:auto;font-size:11.5px">מעבר לתצוגת נייד</button>
+  </div>
+  <div id="bview" hidden><span id="bview-t"></span><span class="bh">גרירה: הסתכלות סביב · גלגלת: התקרבות</span><button type="button" id="bview-x">יציאה</button></div>
+  <div id="tip" hidden></div>
+  <div class="attrib">תוכניות: מנהל התכנון (XPLAN, מבא"ת) · מבנים ורחובות © תורמי OpenStreetMap</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script id="data" type="application/json">__DATA__</script>
+<script>
+(function(){
+const D=JSON.parse(document.getElementById('data').textContent);
+const STATUS_ORDER={permit:0,approved:1,deposited:2,submitted:3,prep:4};
+const canvas=document.getElementById('c'), app=document.getElementById('app');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const tok=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(38,1,2,9000);
+const controls=new THREE.OrbitControls(camera,canvas);
+controls.enableDamping=true; controls.dampingFactor=.09; controls.screenSpacePanning=true;
+controls.minPolarAngle=0; controls.maxPolarAngle=Math.PI/2-0.02; controls.minDistance=3; controls.maxDistance=4200;
+controls.rotateSpeed=.6; controls.zoomSpeed=1.15; controls.autoRotateSpeed=1.1;
+controls.mouseButtons={LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN};
+controls.touches={ONE:THREE.TOUCH.ROTATE,TWO:THREE.TOUCH.DOLLY_PAN};
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x8a8f88,.62));
+const sun=new THREE.DirectionalLight(0xffffff,.78);
+sun.position.set(-520,900,640); sun.castShadow=true;
+const sc=sun.shadow.camera; sc.left=-1300; sc.right=1300; sc.top=1100; sc.bottom=-1100; sc.near=100; sc.far=3000;
+sun.shadow.mapSize.set(4096,4096); sun.shadow.bias=-0.0006; sun.shadow.normalBias=0.4;
+scene.add(sun);
+
+const V2=(p)=>new THREE.Vector2(p[0],p[1]);
+function shape(o,h){const s=new THREE.Shape(o.map(V2));(h||[]).forEach(r=>s.holes.push(new THREE.Path(r.map(V2))));return s;}
+const M={};
+function mat(key,opts){M[key]=new THREE.MeshLambertMaterial(opts||{});return M[key];}
+['land','far','sea','road','prom','rail','park','beach','pier'].forEach(k=>mat(k));
+M.bld=new THREE.MeshStandardMaterial({roughness:.92,metalness:0});
+M.demo=new THREE.MeshStandardMaterial({roughness:.92,metalness:0});
+M.edge=new THREE.LineBasicMaterial({transparent:true,opacity:.7});
+function flat(list,m,y,recv=true){
+  list.forEach(q=>{const g=new THREE.ShapeGeometry(shape(q.o,q.h));const me=new THREE.Mesh(g,m);me.rotation.x=-Math.PI/2;me.position.y=y;me.receiveShadow=recv;scene.add(me);});
+}
+const [vx0,vy0,vx1,vy1]=D.view;
+{const far=new THREE.Mesh(new THREE.PlaneGeometry(14000,14000),M.far);far.rotation.x=-Math.PI/2;far.position.y=-.6;scene.add(far);
+ flat([{o:[[vx0,vy0],[vx1,vy0],[vx1,vy1],[vx0,vy1]]}],M.land,0);}
+flat(D.sea,M.sea,.25,false); flat(D.beach,M.beach,.35); flat(D.parks,M.park,.45);
+flat(D.roads,M.road,.55); flat(D.promenade,M.prom,.6); flat(D.rail,M.rail,.7); flat(D.piers,M.pier,.4);
+
+const CELLM={}; ['res','open','public','com','hotel','other'].forEach(k=>{CELLM[k]=new THREE.MeshBasicMaterial({transparent:true,opacity:.55,depthWrite:false});});
+const cellPick=[];
+/* context outlines (neighbouring renewal plans) */
+M.ctx=new THREE.LineDashedMaterial({dashSize:5,gapSize:4});
+(D.context||[]).forEach(r=>{const lp=r.map(q=>new THREE.Vector3(q[0],1.1,-q[1])); lp.push(lp[0].clone()); const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints(lp),M.ctx); l.computeLineDistances(); scene.add(l);});
+/* existing buildings */
+const pickables=[]; const existing=[];
+function extrude(p,h,hl){const g=new THREE.ExtrudeGeometry(shape(p,hl),{depth:h,bevelEnabled:false});g.rotateX(-Math.PI/2);return g;}
+D.existing.forEach(e=>{
+  const g=extrude(e.p,e.h); const me=new THREE.Mesh(g,M.bld); me.castShadow=true; me.receiveShadow=true;
+  const ed=new THREE.LineSegments(new THREE.EdgesGeometry(g,30),M.edge);
+  scene.add(me); scene.add(ed); me.userData={kind:'ex',e}; pickables.push(me); existing.push({me,ed,e});
+});
+/* plans */
+const plans=D.plans.slice().sort((a,b)=>STATUS_ORDER[a.status]-STATUS_ORDER[b.status]);
+const PL={};
+plans.forEach((p,i)=>{
+  const col=new THREE.Color(p.color);
+  const fill=new THREE.MeshStandardMaterial({color:col,transparent:true,opacity:.45,depthWrite:false,roughness:.6,metalness:0,side:THREE.DoubleSide});
+  const edge=new THREE.LineBasicMaterial({color:col});
+  const gfill=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.16,depthWrite:false});
+  const grp=new THREE.Group(); scene.add(grp);
+  const dashed=(p.status==='prep'||p.status==='submitted');
+  const lmat=dashed?new THREE.LineDashedMaterial({color:col,dashSize:7,gapSize:5}):new THREE.LineBasicMaterial({color:col});
+  const cellGrp=new THREE.Group(); grp.add(cellGrp);
+  if(p.cells&&p.cells.length){ p.cells.forEach(c=>{const m=CELLM[c.k]||CELLM.other; const gm=new THREE.Mesh(new THREE.ShapeGeometry(shape(c.o)),m); gm.rotation.x=-Math.PI/2; gm.position.y=.8; gm.renderOrder=1; gm.userData={kind:'cell',p,c}; cellGrp.add(gm); cellPick.push(gm);}); }
+  else { p.boundary.forEach(r=>{const gm=new THREE.Mesh(new THREE.ShapeGeometry(shape(r)),gfill); gm.rotation.x=-Math.PI/2; gm.position.y=.8; gm.renderOrder=1; cellGrp.add(gm);}); }
+  p.boundary.forEach(r=>{const lp=r.map(q=>new THREE.Vector3(q[0],1.0,-q[1])); lp.push(lp[0].clone());
+    const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(lp),lmat); if(dashed) line.computeLineDistances(); grp.add(line);});
+  let top={h:0,x:0,y:0};
+  p.bld.forEach(b=>{
+    const g=extrude(b.p,b.h,b.hl); const me=new THREE.Mesh(g,fill); me.castShadow=true; me.renderOrder=2;
+    const ed=new THREE.LineSegments(new THREE.EdgesGeometry(g,30),edge); ed.renderOrder=3;
+    if(b.z0){me.position.y=b.z0; ed.position.y=b.z0;}
+    grp.add(me); grp.add(ed); me.userData={kind:'pl',p,b,ed}; pickables.push(me);
+    if((b.z0||0)+b.h>top.h){const cx=b.p.reduce((s,q)=>s+q[0],0)/b.p.length, cy=b.p.reduce((s,q)=>s+q[1],0)/b.p.length; top={h:(b.z0||0)+b.h,x:cx,y:cy};}
+  });
+  const allp=p.boundary.flat(); const xs=allp.map(q=>q[0]), ys=allp.map(q=>q[1]);
+  const cx=(Math.min(...xs)+Math.max(...xs))/2, cy=(Math.min(...ys)+Math.max(...ys))/2;
+  const ext=Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys));
+  const maxF=p.bld.length?Math.max(...p.bld.map(b=>(b.z0?Math.round(b.z0/4.2):0)+b.f)):0;
+  PL[p.id]={p,grp,fill,edge,gfill,cellGrp,top,center:{x:cx,y:cy},ext,maxF,visible:true};
+});
+
+/* labels */
+const labelsEl=document.getElementById('labels');
+const tags=plans.map(p=>{const el=document.createElement('div');el.className='ptag';el.style.setProperty('--c',p.color);
+  el.innerHTML='<span></span><b></b>'; el.firstChild.textContent=p.name; el.lastChild.textContent=p.unitsTxt.replace(/ \(.*\)/,'')+' · עד '+PL[p.id].maxF+' ק׳';
+  el.addEventListener('click',()=>focusPlan(p.id)); labelsEl.appendChild(el); return {el,id:p.id};});
+const btags=[]; plans.forEach(p=>p.bld.forEach(b=>{ if(!b.tag) return; const cx=b.p.reduce((s,q)=>s+q[0],0)/b.p.length, cy=b.p.reduce((s,q)=>s+q[1],0)/b.p.length;
+  const el=document.createElement('div'); el.className='btag'; el.textContent=b.tag; const sm=document.createElement('small'); sm.textContent=b.f+' ק׳'; el.appendChild(sm); labelsEl.appendChild(el); btags.push({el,id:p.id,x:cx,y:cy,h:b.h}); }));
+const slabels=D.labels.map(l=>{const el=document.createElement('div');el.className='slabel';el.textContent=l.t;labelsEl.appendChild(el);return {el,l};});
+
+/* panel */
+const plist=document.getElementById('plist');
+const cards={};
+plans.forEach(p=>{
+  const c=document.createElement('article'); c.className='pcard'; c.style.setProperty('--c',p.color);
+  c.innerHTML=`<input type="checkbox" class="vis" id="vis-${p.id}" checked aria-label="הצג">
+  <div class="main">
+    <button class="ttl" aria-expanded="false"><span class="sw"></span><span class="nm"></span></button>
+    <div class="meta"><span class="chip st-${p.status}"></span><span class="code"></span></div>
+    <div class="kv"><span class="u"></span> · <span class="hgt"></span></div>
+    <div class="more"><div class="ex"></div><div class="acc"></div><div class="src"></div></div>
+  </div>`;
+  c.querySelector('.nm').textContent=p.name; c.querySelector('.chip').textContent=p.statusLabel;
+  c.querySelector('.code').textContent=p.code; c.querySelector('.u').textContent=p.unitsTxt; c.querySelector('.hgt').textContent=p.heights;
+  c.querySelector('.ex').textContent=p.extra; c.querySelector('.acc').textContent=p.accuracy;
+  const src=c.querySelector('.src'); p.src.forEach((s,i)=>{const a=document.createElement('a');a.href=s[1];a.target='_blank';a.rel='noopener';a.textContent=s[0];if(i)src.append(' · ');src.append(a);});
+  c.querySelector('.ttl').addEventListener('click',()=>focusPlan(p.id));
+  c.querySelector('.vis').addEventListener('change',ev=>{PL[p.id].visible=ev.target.checked;applyMode();});
+  plist.appendChild(c); cards[p.id]=c;
+});
+document.getElementById('s-n').textContent=D.nplans||(plans.filter(p=>p.id!=='infill').length+10);
+document.getElementById('s-u').textContent='≈'+(Math.round(plans.reduce((s,p)=>s+(p.units||0),0)/50)*50).toLocaleString('en-US');
+document.getElementById('s-max').textContent=Math.max(...plans.map(p=>PL[p.id].maxF));
+
+/* modes */
+let mode='both', opacity=.45, showDemo=true, showLabels=true, showCells=true;
+function applyMode(){
+  plans.forEach(p=>{const o=PL[p.id]; const vis=mode!=='existing'&&o.visible; o.grp.visible=vis;
+    o.fill.opacity= mode==='future'?Math.max(.9,opacity):opacity; o.fill.depthWrite= mode==='future';
+    o.gfill.opacity= mode==='future'?.1:.16; o.cellGrp.visible=showCells;});
+  existing.forEach(x=>{const d=x.e.d; const planOn=d&&PL[d]&&PL[d].visible;
+    if(!d||!planOn){x.me.visible=x.ed.visible=true;x.me.material=M.bld;return;}
+    if(mode==='future'){x.me.visible=x.ed.visible=false;return;}
+    x.me.visible=x.ed.visible=true; x.me.material=(mode==='both'&&showDemo)?M.demo:M.bld;});
+  document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===mode));
+  if(window.__instReady) applyInst();
+}
+document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;applyMode();}));
+document.getElementById('op').addEventListener('input',e=>{opacity=e.target.value/100;applyMode();});
+document.getElementById('t-demo').addEventListener('change',e=>{showDemo=e.target.checked;applyMode();});
+document.getElementById('t-lab').addEventListener('change',e=>{showLabels=e.target.checked;labelsEl.hidden=!showLabels;});
+document.getElementById('t-sh').addEventListener('change',e=>{sun.castShadow=e.target.checked;});
+document.getElementById('t-lu').addEventListener('change',e=>{showCells=e.target.checked;applyMode();});
+const panel=document.getElementById('panel'), sheet=document.getElementById('sheet');
+sheet.addEventListener('click',()=>{const c=panel.classList.toggle('collapsed');sheet.textContent=c?'תוכניות':'הסתר';sheet.setAttribute('aria-expanded',!c);});
+
+/* theme */
+function applyTheme(){
+  const sky=new THREE.Color(tok('--sky'));
+  scene.background=sky; scene.fog=new THREE.Fog(sky,2600,6200);
+  const set=(k,v)=>M[k].color.set(tok(v));
+  set('land','--land');set('far','--far');set('sea','--sea');set('road','--road');set('prom','--beach');set('rail','--rail');set('park','--park');set('beach','--beach');set('pier','--rail');
+  ['res','open','public','com','hotel','other'].forEach(k=>CELLM[k].color.set(tok('--lu-'+k))); M.ctx.color.set(tok('--ink-2'));
+  M.bld.color.set(tok('--bld')); M.demo.color.set(tok('--demo')); M.edge.color.set(tok('--bld-edge'));
+}
+applyTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* camera */
+const VIEWS={
+  sea:{pos:[-620,560,-760],tgt:[130,0,30]},
+  top:{pos:[120,1900,1],tgt:[120,0,0]},
+  carmel:{pos:[260,520,920],tgt:[120,0,-150]},
+};
+let anim=null;
+let balc=null;
+function flyTo(pos,tgt,ms=900,keep=false){
+  if(!keep&&typeof exitBalcony==='function') exitBalcony();
+  const p0=camera.position.clone(), t0=controls.target.clone(), p1=new THREE.Vector3(...pos), t1=new THREE.Vector3(...tgt);
+  if(reduce){camera.position.copy(p1);controls.target.copy(t1);return;}
+  const st=performance.now(); anim=(now)=>{let k=Math.min(1,(now-st)/ms);k=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    camera.position.lerpVectors(p0,p1,k);controls.target.lerpVectors(t0,t1,k);if(k>=1)anim=null;};
+}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{const v=VIEWS[b.dataset.view];flyTo(v.pos,v.tgt);}));
+document.getElementById('v-north').addEventListener('click',()=>{const t=controls.target, d=camera.position.distanceTo(t), el=Math.max(.35,Math.asin(Math.min(1,(camera.position.y-t.y)/d)));
+  flyTo([t.x,t.y+d*Math.sin(el),t.z+d*Math.cos(el)],[t.x,t.y,t.z]);});
+camera.position.set(...VIEWS.sea.pos); controls.target.set(...VIEWS.sea.tgt);
+
+let active=null;
+function focusPlan(id){
+  const o=PL[id]; const c=o.center; const d=Math.max(260,o.ext*1.6+o.top.h*1.4);
+  const dir=camera.position.clone().sub(controls.target).setY(0).normalize(); if(!isFinite(dir.x)||dir.length()<.1) dir.set(-.6,0,-.8);
+  const tgt=[c.x,o.top.h*.25,-c.y]; flyTo([tgt[0]+dir.x*d*.8,d*.62,tgt[2]+dir.z*d*.8],tgt);
+  if(active&&cards[active]) cards[active].classList.remove('active','open'), cards[active].querySelector('.ttl').setAttribute('aria-expanded','false');
+  active=id; cards[id].classList.add('active','open'); cards[id].querySelector('.ttl').setAttribute('aria-expanded','true');
+  if(!o.visible){o.visible=true;cards[id].querySelector('.vis').checked=true;}
+  if(mode==='existing') mode='both'; applyMode();
+  cards[id].scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+}
+
+/* picking */
+const tip=document.getElementById('tip'); const ray=new THREE.Raycaster(); const ndc=new THREE.Vector2(); let down=null;
+canvas.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});
+canvas.addEventListener('pointerup',e=>{
+  if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5){down=null;return;} down=null;
+  const r=canvas.getBoundingClientRect(); ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+  ray.setFromCamera(ndc,camera);
+  let hits=ray.intersectObjects(pickables.filter(m=>m.visible&&(m.parent===scene||m.parent.visible)),false);
+  if(!hits.length&&showCells) hits=ray.intersectObjects(cellPick.filter(m=>m.parent.parent.visible),false);
+  if(!hits.length){tip.hidden=true;return;}
+  const u=hits[0].object.userData; let html='';
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  if(u.kind==='unit'){html=`<div class="t">${esc(u.u.title)}</div><div>${esc(u.u.sub)}</div><div class="s">${esc(u.u.face)}</div>`;}
+  else if(u.kind==='ex'){const e2=u.e; const fl=e2.l?e2.l:Math.max(1,Math.round(e2.h/3.2));
+    html=`<div class="t">${esc(e2.n||e2.a||'מבנה קיים')}</div>${e2.n&&e2.a?`<div class="s">${esc(e2.a)}</div>`:''}
+      <div><span class="n">${fl}</span> קומות${e2.l?'':' (הערכה)'} · <span class="n">${Math.round(e2.h)}</span> מ׳</div>
+      ${e2.d?`<div class="s">מיועד להריסה במסגרת ${esc(PL[e2.d].p.name)}</div>`:''}${e2.keep?'<div class="s">מבנה התחנה ההיסטורי, נשמר בתוכנית</div>':''}`;}
+  else if(u.kind==='inst'){html=instHTML(u.it);}
+  else if(u.kind==='cell'){const p=u.p,c=u.c; html=`<div class="t"><span class="sw" style="background:${p.color}"></span>תא שטח ${esc(c.n)}</div><div>${esc(c.u)}</div><div class="s">${esc(p.name)} · ${esc(p.code)}</div>`;}
+  else{const p=u.p,b=u.b; html=`<div class="t"><span class="sw" style="background:${p.color}"></span>${esc(b.tag?('בניין '+b.tag+' · '+p.name):(b.l||p.name))}</div>
+      <div>${esc(b.u)} · <span class="n">${b.f}</span> קומות · כ-<span class="n">${Math.round(b.h)}</span> מ׳${b.n?' (משוער)':''}</div>
+      <div class="s">${esc(p.statusLabel)} · ${esc(p.units)}</div>`;}
+  tip.innerHTML=html; tip.hidden=false;
+  const ar=app.getBoundingClientRect(); let x=e.clientX-ar.left+14, y=e.clientY-ar.top+14;
+  const tw=tip.offsetWidth, th=tip.offsetHeight; if(x+tw>ar.width-8)x=e.clientX-ar.left-tw-14; if(y+th>ar.height-8)y=e.clientY-ar.top-th-14;
+  tip.style.left=Math.max(8,x)+'px'; tip.style.top=Math.max(8,y)+'px';
+});
+controls.addEventListener('start',()=>{tip.hidden=true;});
+{const b=document.getElementById('lay-sw'); if(b){ if(!window.__bgSwitch) b.hidden=true; else b.addEventListener('click',()=>window.__bgSwitch('m')); }}
+
+/* public institutions */
+const ICAT={edu:['בתי ספר והשכלה','#2563eb'],kg:['גנים ומעונות','#db2777'],health:['בריאות','#dc2626'],rel:['מבני דת','#7c3aed'],comm:['קהילה, תרבות ורווחה','#059669'],gov:['שירותים עירוניים וביטחון','#64748b']};
+const instOn=new Set(Object.keys(ICAT)); let showInst=true, showInstNames=true;
+const escI=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function instHTML(it){const cat=ICAT[it.c], p=it.f&&PL[it.pl]?PL[it.pl].p:null;
+  return `<div class="t"><span class="sw" style="background:${cat[1]}"></span>${escI(it.n)}</div><div>${escI(it.s)}</div>`+
+   (p?`<div class="s">מתוכנן · ${escI(p.name)} · ${escI(p.statusLabel)}</div>`:`<div class="s">${escI(cat[0])} · קיים</div>`)+
+   (it.note?`<div class="s">${escI(it.note)}</div>`:'')+(it.d&&PL[it.d]?`<div class="s">המבנה הקיים מיועד להריסה במסגרת ${escI(PL[it.d].p.name)}</div>`:'')+
+   `<div class="s">מקור: ${escI(it.src)}</div>`;}
+function tipAt(html,cx,cy){tip.innerHTML=html; tip.hidden=false; const ar=app.getBoundingClientRect(); let x=cx-ar.left+14,y=cy-ar.top+14;
+  const tw=tip.offsetWidth,th=tip.offsetHeight; if(x+tw>ar.width-8)x=cx-ar.left-tw-14; if(y+th>ar.height-8)y=cy-ar.top-th-14;
+  tip.style.left=Math.max(8,x)+'px'; tip.style.top=Math.max(8,y)+'px';}
+const IT=(D.inst||[]).map(it=>{const col=new THREE.Color(ICAT[it.c][1]); const g=new THREE.Group(); scene.add(g);
+  const base=it.h||0, L=it.f?16:11, top=base+L;
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,L,6),new THREE.MeshBasicMaterial({color:col})); pole.position.set(it.x,base+L/2,-it.y); g.add(pole);
+  const head=new THREE.Mesh(it.f?new THREE.OctahedronGeometry(3.6):new THREE.SphereGeometry(2.7,16,12),new THREE.MeshBasicMaterial({color:col}));
+  head.position.set(it.x,top,-it.y); head.userData={kind:'inst',it}; g.add(head); pickables.push(head);
+  if(it.f){const ring=new THREE.Mesh(new THREE.RingGeometry(4.5,5.6,28),new THREE.MeshBasicMaterial({color:col,side:THREE.DoubleSide}));
+    ring.rotation.x=-Math.PI/2; ring.position.set(it.x,base+.35,-it.y); g.add(ring);}
+  const el=document.createElement('div'); el.className='itag'+(it.f?' fut':''); el.style.setProperty('--ic',ICAT[it.c][1]);
+  el.innerHTML='<i></i><span></span>'; el.lastChild.textContent=it.n; el.title=it.n;
+  el.addEventListener('click',ev=>{ev.stopPropagation(); tipAt(instHTML(it),ev.clientX,ev.clientY);});
+  labelsEl.appendChild(el); return {it,g,el,top};});
+function applyInst(){IT.forEach(t=>{const it=t.it; let v=showInst&&instOn.has(it.c);
+  if(it.f) v=v&&mode!=='existing'&&!!PL[it.pl]&&PL[it.pl].visible;
+  else if(it.d&&mode==='future'&&PL[it.d]&&PL[it.d].visible) v=false;
+  t.g.visible=v;});}
+function focusInst(t){const it=t.it; if(it.f&&mode==='existing'){mode='both';} if(it.f&&PL[it.pl]&&!PL[it.pl].visible){PL[it.pl].visible=true; if(cards[it.pl]) cards[it.pl].querySelector('.vis').checked=true;}
+  if(!showInst) setInst(true); instOn.add(it.c); syncChips(); applyMode();
+  const dir=camera.position.clone().sub(controls.target).setY(0).normalize(); if(!isFinite(dir.x)||dir.length()<.1) dir.set(-.6,0,-.8);
+  const d=240+t.top*1.2; const tgt=[it.x,t.top*.5,-it.y]; flyTo([tgt[0]+dir.x*d*.8,t.top*.5+d*.6,tgt[2]+dir.z*d*.8],tgt);
+  setTimeout(()=>{const r=t.el.getBoundingClientRect(); if(t.el.style.display!=='none') tipAt(instHTML(it),r.left+r.width/2,r.top);},reduce?50:1000);}
+/* panel box */
+const ibox=document.createElement('section'); ibox.className='ibox'; ibox.setAttribute('aria-label','מוסדות ציבור');
+const nF=IT.filter(t=>t.it.f).length, nE=IT.length-nF;
+ibox.innerHTML=`<div class="ih"><label><input type="checkbox" id="t-inst2" checked>מוסדות ציבור</label><small>${nE} קיימים · ${nF} מתוכננים</small></div>
+  <div class="ih2"><label><input type="checkbox" id="t-iname2" checked>הצג שמות מוסדות</label></div>
+  <div class="ichips"></div>
+  <details><summary>מוסדות ציבור מתוכננים (${nF})</summary><ul></ul></details>
+  <div class="inote">עיגול = מוסד קיים · יהלום עם טבעת = מתוכנן. מוסדות חינוך קיימים: משרד החינוך (data.gov.il); שאר המוסדות: OpenStreetMap. מוסדות מתוכננים: הוראות התוכניות ונספחי הפרוגרמה לשטחי ציבור.</div>`;
+const chipsEl=ibox.querySelector('.ichips');
+Object.entries(ICAT).forEach(([k,v])=>{const n=IT.filter(t=>t.it.c===k).length; if(!n) return; const b=document.createElement('button'); b.className='ichip'; b.dataset.c=k; b.style.setProperty('--ic',v[1]);
+  b.innerHTML='<i></i><span></span>'; b.lastChild.textContent=v[0]+' · '+n; b.setAttribute('aria-pressed','true');
+  b.addEventListener('click',()=>{instOn.has(k)?instOn.delete(k):instOn.add(k); if(!showInst&&instOn.has(k)) setInst(true); syncChips(); applyInst();}); chipsEl.appendChild(b);});
+function syncChips(){chipsEl.querySelectorAll('.ichip').forEach(b=>b.setAttribute('aria-pressed',String(instOn.has(b.dataset.c))));}
+const ul=ibox.querySelector('ul');
+IT.filter(t=>t.it.f).forEach(t=>{const li=document.createElement('li'); const b=document.createElement('button'); b.style.setProperty('--ic',ICAT[t.it.c][1]);
+  b.innerHTML='<i></i><span></span><small></small>'; b.children[1].textContent=t.it.n; b.children[2].textContent=(PL[t.it.pl]?PL[t.it.pl].p.name:'');
+  b.addEventListener('click',()=>{if(typeof showPane==='function'&&document.getElementById('pane-inst')) showPane(null); focusInst(t);}); li.appendChild(b); ul.appendChild(li);});
+function setInst(v){showInst=v; document.querySelectorAll('#t-inst,#t-inst2').forEach(c=>c.checked=v); applyInst();}
+{const host=document.getElementById('pane-inst'); if(host) host.prepend(ibox); else plist.prepend(ibox);}
+document.querySelectorAll('#t-inst,#t-inst2').forEach(c=>c.addEventListener('change',e=>setInst(e.target.checked)));
+function setINames(v){showInstNames=v; document.querySelectorAll('#t-iname,#t-iname2').forEach(c=>c.checked=v);}
+document.querySelectorAll('#t-iname,#t-iname2').forEach(c=>c.addEventListener('change',e=>setINames(e.target.checked)));
+window.__instReady=true; applyInst();
+
+
+/* resize + loop */
+function resize(){const w=app.clientWidth,h=app.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(app); resize();
+const v3=new THREE.Vector3(); const needle=document.getElementById('needle');
+function place(el,x,y,z,w,h){v3.set(x,y,z).project(camera); if(v3.z>1||v3.z<-1||Math.abs(v3.x)>1.1||Math.abs(v3.y)>1.1){el.style.display='none';return false;}
+  el.style.display=''; el.style.left=((v3.x+1)/2*w)+'px'; el.style.top=((1-v3.y)/2*h)+'px'; return true;}
+function loop(now){
+  requestAnimationFrame(loop); if(anim) anim(now); controls.update(); renderer.render(scene,camera);
+  const az=Math.atan2(camera.position.x-controls.target.x,camera.position.z-controls.target.z); needle.style.transform=`rotate(${az*180/Math.PI}deg)`;
+  {const w=app.clientWidth,h=app.clientHeight; UN.forEach(u=>{const vis=PL.aliya&&PL.aliya.grp.visible; u.grp.visible=vis&&!(balc&&balc.u===u.u); if(!vis){u.el.style.display='none';return;} place(u.el,u.cx,u.top,-u.cy,w,h); if(!reduce) u.mat.opacity=.8+.2*Math.sin(now/260);});}
+  if(!showLabels) return;
+  const w=app.clientWidth,h=app.clientHeight, dist=camera.position.distanceTo(controls.target);
+  tags.forEach(t=>{const o=PL[t.id]; if(!o.grp.visible){t.el.style.display='none';return;} place(t.el,o.top.x,o.top.h+12,-o.top.y,w,h);});
+  btags.forEach(t=>{const o=PL[t.id]; if(!o.grp.visible||dist>1300){t.el.style.display='none';return;} place(t.el,t.x,t.h+3,-t.y,w,h);});
+  if(window.__instReady){const placed=[]; const cp=camera.position;
+    IT.map(t=>[t,(t.it.x-cp.x)**2+(t.top-cp.y)**2+(-t.it.y-cp.z)**2]).sort((a,b)=>a[1]-b[1]).forEach(([t])=>{
+      if(!t.g.visible||!showInstNames||dist>2200||!place(t.el,t.it.x,t.top+5,-t.it.y,w,h)){t.el.style.display='none';return;}
+      if(!t.w){t.w=t.el.offsetWidth||120; t.hh=t.el.offsetHeight||20;}
+      const x=(v3.x+1)/2*w-t.w/2, y=(1-v3.y)/2*h-t.hh;
+      if(placed.some(r=>x<r[0]+r[2]+3&&x+t.w+3>r[0]&&y<r[1]+r[3]+2&&y+t.hh+2>r[1])){t.el.style.display='none';return;}
+      placed.push([x,y,t.w,t.hh]);});}
+  slabels.forEach(s=>{if(dist>1500){s.el.style.display='none';return;} place(s.el,s.l.x,2,-s.l.y,w,h);});
+}
+/* our apartments */
+const UN=[]; const mineEl=document.getElementById('mine');
+(D.units||[]).forEach(u=>{
+  const mat=new THREE.MeshBasicMaterial({color:0xffc400,transparent:true,opacity:1,depthWrite:true});
+  const grp=new THREE.Group(); scene.add(grp);
+  const pad=.6, xs=u.p.map(q=>q[0]), ys=u.p.map(q=>q[1]);
+  const x0=Math.min(...xs)-pad,x1=Math.max(...xs)+pad,y0=Math.min(...ys)-pad,y1=Math.max(...ys)+pad;
+  const g=extrude([[x0,y0],[x1,y0],[x1,y1],[x0,y1]],u.z1-u.z0+.4); const me=new THREE.Mesh(g,mat); me.position.y=u.z0-.2; me.renderOrder=5; grp.add(me);
+  const ed=new THREE.LineSegments(new THREE.EdgesGeometry(g),new THREE.LineBasicMaterial({color:0x1b1600})); ed.position.y=u.z0-.2; grp.add(ed);
+  const cx=(x0+x1)/2, cy=(y0+y1)/2;
+  let topB=u.z1; plans.forEach(p=>p.bld.forEach(b=>{const bx=b.p.map(q=>q[0]),by=b.p.map(q=>q[1]); if(cx>Math.min(...bx)&&cx<Math.max(...bx)&&cy>Math.min(...by)&&cy<Math.max(...by)) topB=Math.max(topB,b.h);}));
+  const top=topB+22; const pole=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,top-u.z1,8),new THREE.MeshBasicMaterial({color:0x1b1600}));
+  pole.position.set(cx,(top+u.z1)/2,-cy); grp.add(pole);
+  me.userData={kind:'unit',u}; pickables.push(me);
+  const el=document.createElement('div'); el.className='utag'; el.textContent=u.title; el.addEventListener('click',()=>focusUnit(u)); app.insertBefore(el,document.getElementById('panel'));
+  UN.push({u,grp,mat,el,cx,cy,top,zc:(u.z0+u.z1)/2});
+  const card=document.createElement('div'); card.className='ucard';
+  card.innerHTML='<div class="ut"></div><div class="us"></div><div class="us f"></div><div class="ub"><button type="button" class="b1">התמקד בדירה</button><button type="button" class="b2">מבט מהמרפסת</button></div>';
+  card.querySelector('.ut').textContent=u.title; card.querySelector('.us').textContent=u.sub; card.querySelector('.f').textContent=u.face;
+  card.querySelector('.b1').addEventListener('click',()=>focusUnit(u)); card.querySelector('.b2').addEventListener('click',()=>balcony(u));
+  mineEl.appendChild(card);
+});
+function unitRec(u){return UN.find(x=>x.u===u);}
+function focusUnit(u){const r=unitRec(u); controls.minDistance=3; controls.autoRotate=false; autoBtn.setAttribute('aria-pressed','false');
+  if(mode==='existing'){mode='both';applyMode();}
+  const d=95; flyTo([r.cx+u.look[0]*d, r.zc+d*.38, -(r.cy+u.look[1]*d)],[r.cx,r.zc,-r.cy]);}
+function hostOf(u){const x=u.eye[0]-u.look[0]*3, y=u.eye[1]-u.look[1]*3; return pickables.find(m=>m.userData.kind==='pl'&&(()=>{const bx=m.userData.b.p.map(q=>q[0]),by=m.userData.b.p.map(q=>q[1]); return x>Math.min(...bx)&&x<Math.max(...bx)&&y>Math.min(...by)&&y<Math.max(...by);})());}
+function exitBalcony(){ if(!balc) return; const h=balc.host; if(h){h.visible=true; h.userData.ed.visible=true;}
+  camera.near=2; camera.updateProjectionMatrix(); controls.minDistance=3; controls.maxPolarAngle=Math.PI/2-0.02; balc=null; bview.hidden=true;
+  document.querySelectorAll('[data-balc]').forEach(b=>b.setAttribute('aria-pressed','false'));}
+function balcony(u){ exitBalcony(); const e=[u.eye[0],u.z0+1.6,-u.eye[1]]; controls.autoRotate=false; autoBtn.setAttribute('aria-pressed','false');
+  if(mode==='existing'){mode='both';applyMode();}
+  const host=hostOf(u); if(host){host.visible=false; host.userData.ed.visible=false;}
+  balc={u,host}; camera.near=.25; camera.updateProjectionMatrix(); controls.minDistance=.2; controls.maxPolarAngle=Math.PI*.8;
+  bviewT.textContent='מבט ממרפסת '+u.title; bview.hidden=false;
+  document.querySelectorAll('[data-balc]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.balc===u.id)));
+  flyTo(e,[e[0]+u.look[0]*1.2,e[1]-.05,e[2]-u.look[1]*1.2],1100,true);}
+const bview=document.getElementById('bview'), bviewT=document.getElementById('bview-t');
+document.getElementById('bview-x').addEventListener('click',()=>{const v=VIEWS.sea; flyTo(v.pos,v.tgt);});
+document.querySelectorAll('[data-balc]').forEach(b=>b.addEventListener('click',()=>{const u=(D.units||[]).find(x=>x.id===b.dataset.balc); if(u) balcony(u);}));
+/* nav pad */
+function orbitBy(dAz,dPol,scale){const t=controls.target.clone(); const off=camera.position.clone().sub(t); const sp=new THREE.Spherical().setFromVector3(off);
+  sp.theta+=dAz; sp.phi=Math.min(controls.maxPolarAngle,Math.max(.05,sp.phi+dPol)); sp.radius=Math.min(controls.maxDistance,Math.max(controls.minDistance,sp.radius*scale));
+  const p=new THREE.Vector3().setFromSpherical(sp).add(t); flyTo([p.x,p.y,p.z],[t.x,t.y,t.z],450,true);}
+document.getElementById('n-rl').addEventListener('click',()=>orbitBy(-Math.PI/4,0,1));
+document.getElementById('n-rr').addEventListener('click',()=>orbitBy(Math.PI/4,0,1));
+document.getElementById('n-up').addEventListener('click',()=>orbitBy(0,-.25,1));
+document.getElementById('n-dn').addEventListener('click',()=>orbitBy(0,.25,1));
+document.getElementById('n-in').addEventListener('click',()=>orbitBy(0,0,.65));
+document.getElementById('n-out').addEventListener('click',()=>orbitBy(0,0,1.5));
+const autoBtn=document.getElementById('n-auto');
+autoBtn.addEventListener('click',()=>{controls.autoRotate=!controls.autoRotate; autoBtn.setAttribute('aria-pressed',String(controls.autoRotate));});
+
+applyMode(); requestAnimationFrame(loop);
+})();
+</script>
